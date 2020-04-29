@@ -42,12 +42,12 @@ def calc_hist_from_file(file):
     return calc_histogram(img)
 
 
-def create_value_training_data_sets():
+def _create_training_data_sets(images_path, enum_class):
     # locate sample image files
     sample_images = []
-    for enum in TokenValue:
+    for enum in enum_class:
         sample_images.append(
-            (enum, glob.glob("sample_images/tokens/values/{}/*".format(enum.name)))
+            (enum, glob.glob("{}/{}/*".format(images_path, enum.name)))
         )
 
     # define training data and labels
@@ -61,22 +61,13 @@ def create_value_training_data_sets():
     return input_data, output_data
 
 
+def create_value_training_data_sets():
+    input_data, output_data = _create_training_data_sets("sample_images/tokens/values/", TokenValue)
+    return input_data, output_data
+
+
 def create_color_training_data_sets():
-    # locate sample image files
-    sample_images = []
-    for enum in TokenColor:
-        sample_images.append(
-            (enum, glob.glob("sample_images/tokens/colors/{}/*".format(enum.name).lower()))
-        )
-
-    # define training data and labels
-    input_data = []
-    output_data = []
-
-    for enum, glob_elem in sample_images:
-        for i in glob_elem:
-            input_data.append(calc_hist_from_file(i))
-            output_data.append(enum.name)
+    input_data, output_data = _create_training_data_sets("sample_images/tokens/colors/", TokenColor)
     return input_data, output_data
 
 
@@ -117,27 +108,25 @@ def detect_circles(image):
     return circles
 
 
-def predict_value(clf, roi):
+def _predict_feature(clf, roi, enum_class):
     # calculate feature vector for region of interest
     hist = calc_histogram(roi)
 
     # predict token value
     s = clf.predict([hist])
 
-    return TokenValue[s[0]]
+    return enum_class[s[0]]
+
+
+def predict_value(clf, roi):
+    return _predict_feature(clf, roi, TokenValue)
 
 
 def predict_color(clf, roi):
-    # calculate feature vector for region of interest
-    hist = calc_histogram(roi)
-
-    # predict token color
-    s = clf.predict([hist])
-
-    return TokenColor[s[0]]
+    return _predict_feature(clf, roi, TokenColor)
 
 
-def predict_token_values(src, dest, clf, circles):
+def _predict_token_feature(src, dest, clf, circles, predict_function):
     predictions = []
     count = 0
     if circles is not None:
@@ -152,7 +141,7 @@ def predict_token_values(src, dest, clf, circles):
             roi = src[y - d:y + d, x - d:x + d]
 
             # try recognition of token feature and add result to list
-            prediction = predict_value(clf, roi).name
+            prediction = predict_function(clf, roi).name
             predictions.append(prediction)
 
             # draw contour and results in the output image
@@ -160,6 +149,14 @@ def predict_token_values(src, dest, clf, circles):
             cv2.putText(dest, prediction, (x - 40, y), cv2.FONT_HERSHEY_PLAIN,
                         1.5, (0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
     return count
+
+
+def predict_token_colors(src, dest, clf, circles):
+    return _predict_token_feature(src, dest, clf, circles, predict_color)
+
+
+def predict_token_values(src, dest, clf, circles):
+    return _predict_token_feature(src, dest, clf, circles, predict_value)
 
 
 def main():
@@ -178,12 +175,12 @@ def main():
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     gray = clahe.apply(gray)
 
-    input_data, output_data = create_value_training_data_sets()
+    input_data, output_data = create_color_training_data_sets()
     clf, score = train_classifier(input_data, output_data)
 
     circles = detect_circles(gray)
 
-    token_count = predict_token_values(image, output, clf, circles)
+    token_count = predict_token_colors(image, output, clf, circles)
 
     # resize input and output images
     image = resize_image(image, 768)
