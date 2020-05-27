@@ -1,8 +1,8 @@
 from enum import Enum
 
 
-# Enumerate token value types for use in classifier
-class TokenValue(Enum):
+# Enumerate chip value types for use in classifier
+class ChipValue(Enum):
     val_1 = 1
     val_5 = 5
     val_10 = 10

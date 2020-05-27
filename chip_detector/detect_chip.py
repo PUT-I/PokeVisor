@@ -6,8 +6,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 
-from token_detector.token_color_enum import TokenColor
-from token_detector.token_value_enum import TokenValue
+from chip_detector.chip_color_enum import ChipColor
+from chip_detector.chip_value_enum import ChipValue
 
 
 def parse_arguments():
@@ -62,12 +62,12 @@ def _create_training_data_sets(images_path, enum_class):
 
 
 def create_value_training_data_sets():
-    input_data, output_data = _create_training_data_sets("sample_images/tokens/values/", TokenValue)
+    input_data, output_data = _create_training_data_sets("sample_images/chips/values/", ChipValue)
     return input_data, output_data
 
 
 def create_color_training_data_sets():
-    input_data, output_data = _create_training_data_sets("sample_images/tokens/colors/", TokenColor)
+    input_data, output_data = _create_training_data_sets("sample_images/chips/colors/", ChipColor)
     return input_data, output_data
 
 
@@ -112,21 +112,21 @@ def _predict_feature(clf, roi, enum_class):
     # calculate feature vector for region of interest
     hist = calc_histogram(roi)
 
-    # predict token value
+    # predict chip value
     s = clf.predict([hist])
 
     return enum_class[s[0]]
 
 
 def predict_value(clf, roi):
-    return _predict_feature(clf, roi, TokenValue)
+    return _predict_feature(clf, roi, ChipValue)
 
 
 def predict_color(clf, roi):
-    return _predict_feature(clf, roi, TokenColor)
+    return _predict_feature(clf, roi, ChipColor)
 
 
-def _predict_token_feature(src, dest, clf, circles, predict_function):
+def _predict_chip_feature(src, dest, clf, circles, predict_function, label_x_offset=40, label_y_offset=0):
     predictions = []
     count = 0
     if circles is not None:
@@ -140,23 +140,23 @@ def _predict_token_feature(src, dest, clf, circles, predict_function):
             # extract region of interest
             roi = src[y - d:y + d, x - d:x + d]
 
-            # try recognition of token feature and add result to list
+            # try recognition of chip feature and add result to list
             prediction = predict_function(clf, roi).name
             predictions.append(prediction)
 
             # draw contour and results in the output image
             cv2.circle(dest, (x, y), d, (0, 255, 0), 2)
-            cv2.putText(dest, prediction, (x - 40, y), cv2.FONT_HERSHEY_PLAIN,
+            cv2.putText(dest, prediction, (x - label_x_offset, y - label_y_offset), cv2.FONT_HERSHEY_PLAIN,
                         1.5, (0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
     return count
 
 
-def predict_token_colors(src, dest, clf, circles):
-    return _predict_token_feature(src, dest, clf, circles, predict_color)
+def predict_chip_colors(src, dest, clf, circles):
+    return _predict_chip_feature(src, dest, clf, circles, predict_color, label_y_offset=10)
 
 
-def predict_token_values(src, dest, clf, circles):
-    return _predict_token_feature(src, dest, clf, circles, predict_value)
+def predict_chip_values(src, dest, clf, circles):
+    return _predict_chip_feature(src, dest, clf, circles, predict_value, label_y_offset=40)
 
 
 def main():
@@ -175,19 +175,23 @@ def main():
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     gray = clahe.apply(gray)
 
-    input_data, output_data = create_color_training_data_sets()
-    clf, score = train_classifier(input_data, output_data)
+    input_color_data, output_color_data = create_color_training_data_sets()
+    clf_color, score = train_classifier(input_color_data, output_color_data)
+
+    input_value_data, output_value_data = create_value_training_data_sets()
+    clf_value, score = train_classifier(input_value_data, output_value_data)
 
     circles = detect_circles(gray)
 
-    token_count = predict_token_colors(image, output, clf, circles)
+    chip_count = predict_chip_colors(image, output, clf_color, circles)
+    _ = predict_chip_values(image, output, clf_value, circles)
 
     # resize input and output images
     image = resize_image(image, 768)
     output = resize_image(output, 768)
 
     # write summary on output image
-    cv2.putText(output, "Tokens detected: {}".format(token_count),
+    cv2.putText(output, "Chips detected: {}".format(chip_count),
                 (5, output.shape[0] - 24), cv2.FONT_HERSHEY_PLAIN,
                 1.0, (0, 0, 255), lineType=cv2.LINE_AA)
     cv2.putText(output, "Classifier mean accuracy: {}%".format(score),
