@@ -1,4 +1,3 @@
-import argparse
 import glob
 
 import cv2
@@ -8,20 +7,7 @@ from sklearn.neural_network import MLPClassifier
 
 from chip_detector.chip_color_enum import ChipColor
 from chip_detector.chip_value_enum import ChipValue
-
-
-def parse_arguments():
-    # construct argument parser and parse arguments
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-i", "--image", required=True, help="path to image")
-    return vars(ap.parse_args())
-
-
-# resize image while retaining aspect ratio
-def resize_image(img, width):
-    d = float(width) / img.shape[1]
-    dim = (width, int(round(img.shape[0] * d)))
-    return cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+from chip_detector.classes.poker_chip import PokerChip
 
 
 def calc_histogram(img):
@@ -126,47 +112,38 @@ def predict_color(clf, roi):
     return _predict_feature(clf, roi, ChipColor)
 
 
-def _predict_chip_feature(src, dest, clf, circles, predict_function, label_x_offset=40, label_y_offset=0):
+def _predict_chip_feature(src, clf, circles, predict_function, label_x_offset=40, label_y_offset=0, dst=None):
     predictions = []
-    count = 0
     if circles is not None:
         # convert coordinates and radii to integers
         circles = np.round(circles[0, :]).astype("int")
 
         # loop over coordinates and radii of the circles
         for (x, y, d) in circles:
-            count += 1
-
             # extract region of interest
             roi = src[y - d:y + d, x - d:x + d]
 
             # try recognition of chip feature and add result to list
-            prediction = predict_function(clf, roi).name
+            prediction = predict_function(clf, roi)
             predictions.append(prediction)
 
             # draw contour and results in the output image
-            cv2.circle(dest, (x, y), d, (0, 255, 0), 2)
-            cv2.putText(dest, prediction, (x - label_x_offset, y - label_y_offset), cv2.FONT_HERSHEY_PLAIN,
-                        1.5, (0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
-    return count
+            if dst is not None:
+                cv2.circle(dst, (x, y), d, (0, 255, 0), 2)
+                cv2.putText(dst, prediction.name, (x - label_x_offset, y - label_y_offset), cv2.FONT_HERSHEY_PLAIN,
+                            1.5, (0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
+    return predictions
 
 
-def predict_chip_colors(src, dest, clf, circles):
-    return _predict_chip_feature(src, dest, clf, circles, predict_color, label_y_offset=10)
+def predict_chip_colors(src, clf, circles, dst=None):
+    return _predict_chip_feature(src, clf, circles, predict_color, label_y_offset=10, dst=dst)
 
 
-def predict_chip_values(src, dest, clf, circles):
-    return _predict_chip_feature(src, dest, clf, circles, predict_value, label_y_offset=40)
+def predict_chip_values(src, clf, circles, dst=None):
+    return _predict_chip_feature(src, clf, circles, predict_value, label_y_offset=40, dst=dst)
 
 
-def main():
-    args = parse_arguments()
-    image = cv2.imread(args["image"])
-    image = resize_image(image, 1024)
-
-    # create a copy of the image to display results
-    output = image.copy()
-
+def detect_chips(image, dst=None) -> list:
     # convert image to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -176,32 +153,18 @@ def main():
     gray = clahe.apply(gray)
 
     input_color_data, output_color_data = create_color_training_data_sets()
-    clf_color, score = train_classifier(input_color_data, output_color_data)
+    clf_color, _ = train_classifier(input_color_data, output_color_data)
 
     input_value_data, output_value_data = create_value_training_data_sets()
-    clf_value, score = train_classifier(input_value_data, output_value_data)
+    clf_value, _ = train_classifier(input_value_data, output_value_data)
 
     circles = detect_circles(gray)
 
-    chip_count = predict_chip_colors(image, output, clf_color, circles)
-    _ = predict_chip_values(image, output, clf_value, circles)
+    chip_colors = predict_chip_colors(image, clf_color, circles, dst=dst)
+    chip_values = predict_chip_values(image, clf_value, circles, dst=dst)
 
-    # resize input and output images
-    image = resize_image(image, 768)
-    output = resize_image(output, 768)
+    chips = []
+    for color, value in zip(chip_colors, chip_values):
+        chips.append(PokerChip(color, value))
 
-    # write summary on output image
-    cv2.putText(output, "Chips detected: {}".format(chip_count),
-                (5, output.shape[0] - 24), cv2.FONT_HERSHEY_PLAIN,
-                1.0, (0, 0, 255), lineType=cv2.LINE_AA)
-    cv2.putText(output, "Classifier mean accuracy: {}%".format(score),
-                (5, output.shape[0] - 8), cv2.FONT_HERSHEY_PLAIN,
-                1.0, (0, 0, 255), lineType=cv2.LINE_AA)
-
-    # show output and wait for key to terminate program
-    cv2.imshow("Output", np.hstack([image, output]))
-    cv2.waitKey()
-
-
-if __name__ == '__main__':
-    main()
+    return chips
