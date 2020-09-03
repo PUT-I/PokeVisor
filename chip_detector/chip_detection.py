@@ -5,8 +5,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 
-from chip_detector.chip_color_enum import ChipColor
-from chip_detector.chip_value_enum import ChipValue
+from chip_detector.classes.chip_color_enum import ChipColor
+from chip_detector.classes.chip_value_enum import ChipValue
 from chip_detector.classes.poker_chip import PokerChip
 
 

@@ -1,4 +1,4 @@
-from card_detector.card_rank_enum import CardRank
+from card_detector.classes.card_rank_enum import CardRank
 
 
 class TrainRanks:

@@ -6,8 +6,8 @@ import cv2
 import numpy as np
 
 # Adaptive threshold levels
-from card_detector.card_rank_enum import CardRank
-from card_detector.card_suit_enum import CardSuit
+from card_detector.classes.card_rank_enum import CardRank
+from card_detector.classes.card_suit_enum import CardSuit
 from card_detector.classes.poker_card_info import PokerCardInfo
 from card_detector.classes.train_ranks import TrainRanks
 from card_detector.classes.train_suits import TrainSuits

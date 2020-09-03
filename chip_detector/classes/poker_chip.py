@@ -1,5 +1,5 @@
-from chip_detector.chip_color_enum import ChipColor
-from chip_detector.chip_value_enum import ChipValue
+from chip_detector.classes.chip_color_enum import ChipColor
+from chip_detector.classes.chip_value_enum import ChipValue
 
 
 class PokerChip:

@@ -1,4 +1,4 @@
-from card_detector.card_suit_enum import CardSuit
+from card_detector.classes.card_suit_enum import CardSuit
 
 
 class TrainSuits:
