@@ -48,12 +48,12 @@ def _create_training_data_sets(images_path, enum_class):
 
 
 def create_value_training_data_sets():
-    input_data, output_data = _create_training_data_sets("sample_images/chips/values/", ChipValue)
+    input_data, output_data = _create_training_data_sets("sample_images/values/", ChipValue)
     return input_data, output_data
 
 
 def create_color_training_data_sets():
-    input_data, output_data = _create_training_data_sets("sample_images/chips/colors/", ChipColor)
+    input_data, output_data = _create_training_data_sets("sample_images/colors/", ChipColor)
     return input_data, output_data
 
 

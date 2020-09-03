@@ -10,15 +10,15 @@ class PokerCardInfo:
         self.contour = []  # Contour of card
         self.width, self.height = 0, 0  # Width and height of card
         self.center = []  # Center point of card
-        self.rank_img = []  # Thresholded, sized image of card's rank
-        self.suit_img = []  # Thresholded, sized image of card's suit
+        self.rank_img = []  # Thresholded, sized image of card"s rank
+        self.suit_img = []  # Thresholded, sized image of card"s suit
         self.best_rank_match: CardRank = CardRank.unknown  # Best matched rank
         self.best_suit_match: CardSuit = CardSuit.unknown  # Best matched suit
         self.rank_diff = 0  # Difference between rank image and best matched train rank image
         self.suit_diff = 0  # Difference between suit image and best matched train suit image
 
     def __repr__(self):
-        return self.best_rank_match + ' of ' + self.best_suit_match
+        return self.best_rank_match + " of " + self.best_suit_match
 
     def to_poker_card(self) -> PokerCard:
         return PokerCard(self.best_rank_match, self.best_suit_match)

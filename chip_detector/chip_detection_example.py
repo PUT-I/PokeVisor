@@ -8,7 +8,7 @@ from chip_detector import chip_detection
 def parse_arguments():
     # construct argument parser and parse arguments
     ap = argparse.ArgumentParser()
-    ap.add_argument("-i", "--image", required=True, help="path to image")
+    ap.add_argument("-i", "--image", required=False, help="path to image", default="chips_input.jpg")
     return vars(ap.parse_args())
 
 
@@ -45,5 +45,5 @@ def main():
     cv2.waitKey()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

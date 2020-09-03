@@ -51,7 +51,7 @@ def load_ranks(filepath):
         train_ranks.append(TrainRanks())
         last = len(train_ranks) - 1
         train_ranks[last].rank = rank
-        filename = str(rank.name) + '.jpg'
+        filename = str(rank.name) + ".jpg"
         train_ranks[last].img = cv2.imread(filepath + filename, cv2.IMREAD_GRAYSCALE)
 
     return train_ranks
@@ -70,7 +70,7 @@ def load_suits(filepath):
         train_suits.append(TrainSuits())
         last = len(train_suits) - 1
         train_suits[last].suit = suit
-        filename = str(suit.name) + '.jpg'
+        filename = str(suit.name) + ".jpg"
         train_suits[last].img = cv2.imread(filepath + filename, cv2.IMREAD_GRAYSCALE)
 
     return train_suits
@@ -160,7 +160,7 @@ def preprocess_card(contour, image) -> PokerCardInfo:
     approx = cv2.approxPolyDP(contour, 0.01 * peri, True)
     pts = np.float32(approx)
 
-    # Find width and height of card's bounding rectangle
+    # Find width and height of card"s bounding rectangle
     x, y, w, h = cv2.boundingRect(contour)
     card_info.width, card_info.height = w, h
 
@@ -255,7 +255,7 @@ def match_card(card, train_ranks, train_suits):
                 best_suit_match_diff = suit_diff
                 best_suit_name = t_suit.suit
 
-    # Combine best rank match and best suit match to get poker card's identity.
+    # Combine best rank match and best suit match to get poker card"s identity.
     # If the best matches have too high of a difference value, card identity
     # is still unknown
     if best_rank_match_diff < RANK_DIFF_MAX:
@@ -279,8 +279,8 @@ def draw_results(image, card):
     suit_name = card.best_suit_match
 
     # Draw card name twice, so letters have black outline
-    cv2.putText(image, (rank_name.name + ' of'), (x - 60, y - 10), font, 1, (0, 0, 0), 3, cv2.LINE_AA)
-    cv2.putText(image, (rank_name.name + ' of'), (x - 60, y - 10), font, 1, (50, 200, 200), 2, cv2.LINE_AA)
+    cv2.putText(image, (rank_name.name + " of"), (x - 60, y - 10), font, 1, (0, 0, 0), 3, cv2.LINE_AA)
+    cv2.putText(image, (rank_name.name + " of"), (x - 60, y - 10), font, 1, (50, 200, 200), 2, cv2.LINE_AA)
 
     cv2.putText(image, suit_name.name, (x - 60, y + 25), font, 1, (0, 0, 0), 3, cv2.LINE_AA)
     cv2.putText(image, suit_name.name, (x - 60, y + 25), font, 1, (50, 200, 200), 2, cv2.LINE_AA)
@@ -326,7 +326,7 @@ def flattener(image, pts, w, h):
         temp_rect[2] = tr
         temp_rect[3] = br
 
-    # If the card is 'diamond' oriented, a different algorithm
+    # If the card is "diamond" oriented, a different algorithm
     # has to be used to identify which point is top left, top right
     # bottom left, and bottom right.
 

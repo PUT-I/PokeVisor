@@ -14,8 +14,8 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 
 # Load the train rank and suit images
 path = os.path.dirname(os.path.abspath(__file__))
-train_ranks = card_detection_functions.load_ranks(path + '/sample_images/')
-train_suits = card_detection_functions.load_suits(path + '/sample_images/')
+train_ranks = card_detection_functions.load_ranks(path + "/sample_images/")
+train_suits = card_detection_functions.load_suits(path + "/sample_images/")
 
 
 def detect_cards(image, dst=None) -> list:
@@ -25,13 +25,13 @@ def detect_cards(image, dst=None) -> list:
     # Find and sort the contours of all cards in the image (poker cards)
     cnts_sort, cnt_is_card = card_detection_functions.find_cards(pre_proc)
 
-    # Initialize a new 'cards' list to store the card objects.
+    # Initialize a new "cards" list to store the card objects.
     cards: List[PokerCardInfo] = []
 
     # If there are no contours, do nothing
     if len(cnts_sort) != 0:
 
-        # Initialize a new 'cards' list to assign the card objects.
+        # Initialize a new "cards" list to assign the card objects.
         # k indexes the newly made array of cards.
         k = 0
 
@@ -47,7 +47,7 @@ def detect_cards(image, dst=None) -> list:
                 # Create a card object from the contour and append it to the list of cards.
                 # preprocess_card function takes the card contour and contour and
                 # determines the cards properties (corner points, etc). It generates a
-                # flattened 200x300 image of the card, and isolates the card's
+                # flattened 200x300 image of the card, and isolates the card"s
                 # suit and rank from the image.
                 cards.append(card_detection_functions.preprocess_card(cnts_sort[i], image))
 
