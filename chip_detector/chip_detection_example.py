@@ -30,17 +30,12 @@ def main():
     chips = chip_detection.detect_chips(image, output)
     print(chips)
 
-    # resize input and output images
-    # image = resize_image(image, 768)
-    # output = resize_image(output, 768)
-
     # write summary on output image
     cv2.putText(output, "Chips detected: {}".format(len(chips)),
                 (5, output.shape[0] - 24), cv2.FONT_HERSHEY_PLAIN,
                 1.0, (0, 0, 255), lineType=cv2.LINE_AA)
 
     # show output and wait for key to terminate program
-    # cv2.imshow("Output", np.hstack([image, output]))
     cv2.imshow("Output", output)
     cv2.waitKey()
 

@@ -37,12 +37,6 @@ def detect_cards(image, dst=None) -> list:
 
         # For each contour detected:
         for i in range(len(cnts_sort)):
-            image_cnt = cv2.drawContours(image.copy(), cnts_sort[i], -1, (0, 255, 0), thickness=10)
-            size = cv2.contourArea(cnts_sort[i])
-            cv2.putText(image_cnt, str(size), (0, 100),
-                        cv2.FONT_HERSHEY_PLAIN,
-                        1.5, (0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
-
             if cnt_is_card[i] == 1:
                 # Create a card object from the contour and append it to the list of cards.
                 # preprocess_card function takes the card contour and contour and

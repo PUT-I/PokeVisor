@@ -32,7 +32,7 @@ SUIT_HEIGHT = 100
 RANK_DIFF_MAX = 2000
 SUIT_DIFF_MAX = 700
 
-CARD_MAX_AREA = 120000
+CARD_MAX_AREA = 240000
 CARD_MIN_AREA = 25000
 
 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -170,7 +170,7 @@ def preprocess_card(contour, image) -> PokerCardInfo:
     cent_y = int(average[0][1])
     card_info.center = [cent_x, cent_y]
 
-    # Warp card into 200x300 flattened image using perspective transform
+    # Warp card into 256x360 flattened image using perspective transform
     warp = cv2.resize(flattener(image, pts, w, h), (256, 360))
 
     # Grab corner of warped card image and do a 4x zoom
@@ -264,7 +264,7 @@ def match_card(card, train_ranks, train_suits):
     if best_suit_match_diff < SUIT_DIFF_MAX:
         best_suit_match_name = best_suit_name
 
-    # Return the identiy of the card and the quality of the suit and rank match
+    # Return the identity of the card and the quality of the suit and rank match
     return best_rank_match_name, best_suit_match_name, best_rank_match_diff, best_suit_match_diff
 
 
@@ -280,17 +280,10 @@ def draw_results(image, card):
 
     # Draw card name twice, so letters have black outline
     cv2.putText(image, (rank_name.name + " of"), (x - 60, y - 10), font, 1, (0, 0, 0), 3, cv2.LINE_AA)
-    cv2.putText(image, (rank_name.name + " of"), (x - 60, y - 10), font, 1, (50, 200, 200), 2, cv2.LINE_AA)
+    cv2.putText(image, (rank_name.name + " of"), (x - 60, y - 10), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
     cv2.putText(image, suit_name.name, (x - 60, y + 25), font, 1, (0, 0, 0), 3, cv2.LINE_AA)
-    cv2.putText(image, suit_name.name, (x - 60, y + 25), font, 1, (50, 200, 200), 2, cv2.LINE_AA)
-
-    # Can draw difference value for troubleshooting purposes
-    # (commented out during normal operation)
-    # r_diff = str(qCard.rank_diff)
-    # s_diff = str(qCard.suit_diff)
-    # cv2.putText(image,r_diff,(x+20,y+30),font,0.5,(0,0,255),1,cv2.LINE_AA)
-    # cv2.putText(image,s_diff,(x+20,y+50),font,0.5,(0,0,255),1,cv2.LINE_AA)
+    cv2.putText(image, suit_name.name, (x - 60, y + 25), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
     return image
 
