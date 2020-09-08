@@ -64,6 +64,5 @@ def main():
     TUI.write__turn(community_cards,[player,player_1,player_3])
 
 
-
 if __name__ == "__main__":
     main()
