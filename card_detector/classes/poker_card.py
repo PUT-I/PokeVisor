@@ -11,3 +11,6 @@ class PokerCard:
 
     def __repr__(self):
         return self.rank.name + " of " + self.suit.name
+
+    def is_unknown(self) -> bool:
+        return self.rank == CardRank.unknown or self.suit == CardSuit.unknown

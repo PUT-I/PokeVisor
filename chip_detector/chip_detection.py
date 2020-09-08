@@ -110,7 +110,7 @@ def predict_chip_colors(src, clf, circles, dst=None):
             prediction = predict_color(clf, roi)
             predictions.append(prediction)
 
-            if prediction.name == 'unknown':
+            if prediction.name == PokerChip.unknown.name:
                 continue
 
             # draw contour and results in the output image

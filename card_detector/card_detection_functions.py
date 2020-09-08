@@ -14,7 +14,7 @@ from card_detector.classes.train_suits import TrainSuits
 
 # Constants #
 
-BKG_THRESH = 60
+BKG_THRESH = 70
 CARD_THRESH = 30
 
 # Width and height of card corner, where rank and suit are
@@ -80,7 +80,7 @@ def preprocess_image(image):
     """Returns a grayed, blurred, and adaptively thresholded camera image."""
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    blur = cv2.GaussianBlur(gray, (3, 3), 0)
 
     # The best threshold level depends on the ambient lighting conditions.
     # For bright lighting, a high threshold must be used to isolate the cards
@@ -95,7 +95,9 @@ def preprocess_image(image):
     bkg_level = gray[int(img_h / 100)][int(img_w / 2)]
     thresh_level = bkg_level + BKG_THRESH
 
-    retval, thresh = cv2.threshold(blur, thresh_level, 255, cv2.THRESH_BINARY)
+    # thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+
+    _, thresh = cv2.threshold(blur, thresh_level, 255, cv2.THRESH_BINARY)
 
     return thresh
 
@@ -139,8 +141,7 @@ def find_cards(thresh_image):
         peri = cv2.arcLength(cnts_sort[i], True)
         approx = cv2.approxPolyDP(cnts_sort[i], 0.01 * peri, True)
 
-        if ((size < CARD_MAX_AREA) and (size > CARD_MIN_AREA)
-                and (hier_sort[i][3] == -1) and (len(approx) == 4)):
+        if CARD_MAX_AREA > size > CARD_MIN_AREA and len(approx) == 4:
             cnt_is_card[i] = 1
 
     return cnts_sort, cnt_is_card
@@ -269,11 +270,10 @@ def match_card(card, train_ranks, train_suits):
 
 
 def draw_results(image, card):
-    """Draw the card name, center point, and contour on the camera image."""
+    """Draw the card name and contour on the camera image."""
 
     x = card.center[0]
     y = card.center[1]
-    cv2.circle(image, (x, y), 5, (255, 0, 0), -1)
 
     rank_name = card.best_rank_match
     suit_name = card.best_suit_match
