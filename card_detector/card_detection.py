@@ -50,7 +50,8 @@ def detect_cards(image, dst=None) -> list:
                     k].suit_diff = card_detection_functions.match_card(cards[k], train_ranks, train_suits)
 
                 # Draw center point and match result on the image.
-                image = card_detection_functions.draw_results(image, cards[k])
+                if dst is not None:
+                    dst = card_detection_functions.draw_results(dst, cards[k])
                 k = k + 1
 
         # Draw card contours on image (have to do contours all at once or
@@ -60,5 +61,5 @@ def detect_cards(image, dst=None) -> list:
                 temp_cnts = []
                 for i in range(len(cards)):
                     temp_cnts.append(cards[i].contour)
-                cv2.drawContours(image, temp_cnts, -1, (255, 0, 0), 2)
+                cv2.drawContours(dst, temp_cnts, -1, (255, 0, 0), 2)
     return [card.to_poker_card() for card in cards]
