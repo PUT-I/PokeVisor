@@ -33,7 +33,7 @@ RANK_DIFF_MAX = 2000
 SUIT_DIFF_MAX = 700
 
 CARD_MAX_AREA = 240000
-CARD_MIN_AREA = 25000
+CARD_MIN_AREA = 12500
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -82,23 +82,7 @@ def preprocess_image(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (3, 3), 0)
 
-    # The best threshold level depends on the ambient lighting conditions.
-    # For bright lighting, a high threshold must be used to isolate the cards
-    # from the background. For dim lighting, a low threshold must be used.
-    # To make the card detector independent of lighting conditions, the
-    # following adaptive threshold method is used.
-    #
-    # A background pixel in the center top of the image is sampled to determine
-    # its intensity. The adaptive threshold is set at 50 (THRESH_ADDER) higher
-    # than that. This allows the threshold to adapt to the lighting conditions.
-    img_w, img_h = np.shape(image)[:2]
-    bkg_level = gray[int(img_h / 100)][int(img_w / 2)]
-    thresh_level = bkg_level + BKG_THRESH
-
-    # thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-
-    _, thresh = cv2.threshold(blur, thresh_level, 255, cv2.THRESH_BINARY)
-
+    thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 5, 2)
     return thresh
 
 
@@ -125,9 +109,6 @@ def find_cards(thresh_image):
     # the hierarchy list. The hierarchy array can be used to check if
     # the contours have parents or not.
     for i in index_sort:
-        size = cv2.contourArea(cnts[i])
-        if size < CARD_MIN_AREA:
-            continue
         cnts_sort.append(cnts[i])
         hier_sort.append(hier[0][i])
 
@@ -179,11 +160,11 @@ def preprocess_card(contour, image) -> PokerCardInfo:
     corner_zoom = cv2.resize(corner, (0, 0), fx=4, fy=4)
 
     # Sample known white pixel intensity to determine good threshold level
-    white_level = corner_zoom[15, int((CORNER_WIDTH * 4) / 2)]
+    white_level = corner_zoom[corner_zoom.shape[0] - 1, int((CORNER_WIDTH * 4) / 2)]
     thresh_level = white_level - CARD_THRESH
     if thresh_level <= 0:
         thresh_level = 1
-    retval, poker_thresh = cv2.threshold(corner_zoom, thresh_level, 255, cv2.THRESH_BINARY_INV)
+    _, poker_thresh = cv2.threshold(corner_zoom, thresh_level, 255, cv2.THRESH_BINARY_INV)
 
     # Split in to top and bottom half (top shows rank, bottom shows suit)
     rank = poker_thresh[0:round(CORNER_HEIGHT * 2), 0:CORNER_WIDTH * 4]
@@ -198,9 +179,7 @@ def preprocess_card(contour, image) -> PokerCardInfo:
     if len(rank_cnts) != 0:
         x1, y1, w1, h1 = cv2.boundingRect(rank_cnts[0])
         rank_roi = rank[y1:y1 + h1, x1:x1 + w1]
-
         rank_sized = cv2.resize(rank_roi, (RANK_WIDTH, RANK_HEIGHT), 0, 0)
-
         card_info.rank_img = rank_sized
 
     # Find suit contour and bounding rectangle, isolate and find largest contour

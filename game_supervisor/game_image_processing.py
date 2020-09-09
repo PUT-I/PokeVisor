@@ -4,6 +4,8 @@ from typing import Tuple, List
 import cv2
 import numpy as np
 
+from chip_detector import chip_detection
+
 _community_mask = None
 _player_masks = []
 _description_mask = None
@@ -33,6 +35,8 @@ def put_overlay_on_image(img):
 
 
 def setup(img):
+    chip_detection.setup()
+
     def _common_callback():
         global _players, _community_cards_offset
 
@@ -63,8 +67,8 @@ def setup(img):
     cv2.imshow("setup", img)
     cv2.createTrackbar("players", "setup", 2, 8, _players_callback)
 
-    max_offset = round(img.shape[0] / 4)
-    default_offset = round(img.shape[0] / 8)
+    max_offset = round(img.shape[0] / 2)
+    default_offset = round(img.shape[0] / 6)
     cv2.createTrackbar("community cards offset", "setup", default_offset, max_offset, _offset_callback)
     _players_callback(2)
     _offset_callback(default_offset)
@@ -90,10 +94,13 @@ def _process_cutout(cutout, dst, center_text: str = "", draw_contour: bool = Fal
             point_2 = tuple(cnt[(i + 1) % len(cnt)][0])
             cv2.line(dst, point_1, point_2, (255, 0, 255), thickness=2)
 
-    moments = cv2.moments(cnt)
-    cutout_center = (round(moments["m10"] / moments["m00"]), round(moments["m01"] / moments["m00"]))
-    cv2.putText(dst, center_text, cutout_center, cv2.FONT_HERSHEY_PLAIN,
-                2, (255, 0, 255), lineType=cv2.LINE_AA, thickness=2)
+    try:
+        moments = cv2.moments(cnt)
+        cutout_center = (round(moments["m10"] / moments["m00"]), round(moments["m01"] / moments["m00"]))
+        cv2.putText(dst, center_text, cutout_center, cv2.FONT_HERSHEY_PLAIN,
+                    2, (255, 0, 255), lineType=cv2.LINE_AA, thickness=2)
+    except ZeroDivisionError:
+        pass
 
 
 def _get_community_cards_cutout(img: np.ndarray, center_offset: int, round_cutout: bool = False) -> np.ndarray:

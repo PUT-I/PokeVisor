@@ -1,27 +1,32 @@
 import argparse
-from typing import Tuple, List
+from typing import List
 
 import cv2
 import numpy as np
 
 from card_detector import card_detection
 from card_detector.classes.poker_card import PokerCard
+from chip_detector import chip_detection
 from game_supervisor import game_image_processing
 from hand_selector.hand_checker import Checker
 
 image = np.zeros((1, 1))
 
 
-def supervise(frame: np.ndarray, dst: np.ndarray = None) -> Tuple[List[PokerCard], List[List[PokerCard]]]:
+def supervise(frame: np.ndarray, dst: np.ndarray = None) -> tuple:
     community_image, player_images = game_image_processing.divide_table(frame)
     community_cards = card_detection.detect_cards(community_image, dst)
+    community_chips = chip_detection.detect_chips(community_image, dst)
 
     player_cards_list = []
+    player_chips_list = []
     for i in range(len(player_images)):
         cards = card_detection.detect_cards(player_images[i], dst)
+        chips = chip_detection.detect_chips(player_images[i], dst)
         player_cards_list.append(cards)
+        player_chips_list.append(chips)
 
-    return community_cards, player_cards_list
+    return community_cards, player_cards_list, community_chips, player_chips_list
 
 
 def supervise_video(cap) -> None:
@@ -34,7 +39,7 @@ def supervise_video(cap) -> None:
         if not ret:
             break
 
-        community_cards, player_cards_list = supervise(frame, dst=frame)
+        community_cards, player_cards_list, community_chips, player_chips_list = supervise(frame, dst=frame)
 
         table = game_image_processing.put_overlay_on_image(frame)
         _check_if_cards_uncovered(community_cards, player_cards_list)
@@ -82,14 +87,23 @@ def _image_example():
 
     game_image_processing.setup(image)
 
-    _, _ = supervise(image, dst=image)
+    community_cards, player_cards_list, community_chips, player_chips_list = supervise(image, dst=image)
+
+    print("Community cards: {}".format(community_cards))
+    print("Community chips: {}".format([chip.name for chip in community_chips]))
+
+    for i in range(len(player_cards_list)):
+        print("Player {} cards: {}".format(i + 1, player_cards_list[i]))
+        print("Player {} chips: {}".format(i + 1, [chip.name for chip in player_chips_list[i]]))
+
+    image = game_image_processing.put_overlay_on_image(image)
 
     cv2.imshow("example", image)
     cv2.waitKey()
     cv2.destroyAllWindows()
 
 
-def _movie_example():
+def _video_example():
     args = _parse_arguments()
 
     cap = cv2.VideoCapture(args["movie"])
@@ -103,7 +117,7 @@ def _movie_example():
 
 
 def _main():
-    _movie_example()
+    _image_example()
 
 
 if __name__ == "__main__":
