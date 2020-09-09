@@ -1,4 +1,5 @@
 import argparse
+import time
 from typing import List
 
 import cv2
@@ -15,14 +16,14 @@ image = np.zeros((1, 1))
 
 def supervise(frame: np.ndarray, dst: np.ndarray = None) -> tuple:
     community_image, player_images = game_image_processing.divide_table(frame)
-    community_cards = card_detection.detect_cards(community_image, dst)
-    community_chips = chip_detection.detect_chips(community_image, dst)
+    community_cards, community_cards_cnt = card_detection.detect_cards(community_image, dst)
+    community_chips = chip_detection.detect_chips(community_image, dst, community_cards_cnt)
 
     player_cards_list = []
     player_chips_list = []
     for i in range(len(player_images)):
-        cards = card_detection.detect_cards(player_images[i], dst)
-        chips = chip_detection.detect_chips(player_images[i], dst)
+        cards, cards_cnt = card_detection.detect_cards(player_images[i], dst)
+        chips = chip_detection.detect_chips(player_images[i], dst, cards_cnt)
         player_cards_list.append(cards)
         player_chips_list.append(chips)
 
@@ -34,6 +35,7 @@ def supervise_video(cap) -> None:
     frame_time = round(1000 / fps)
 
     while cap.isOpened():
+        start_time = time.time()
         ret, frame = cap.read()
 
         if not ret:
@@ -45,7 +47,11 @@ def supervise_video(cap) -> None:
         _check_if_cards_uncovered(community_cards, player_cards_list)
 
         cv2.imshow('frame', table)
-        if cv2.waitKey(frame_time) & 0xFF == ord('q'):
+        duration = time.time() - start_time
+        wait_time = round(frame_time - duration * 1000)
+        if wait_time < 1:
+            wait_time = 1
+        if cv2.waitKey(wait_time) & 0xFF == ord('q'):
             break
     cv2.destroyAllWindows()
 
@@ -117,7 +123,7 @@ def _video_example():
 
 
 def _main():
-    _image_example()
+    _video_example()
 
 
 if __name__ == "__main__":

@@ -62,7 +62,7 @@ def remove_inclusive_contours(cnts_sort: list, cnt_is_card: np.ndarray):
     return cnts_sort_result, cnt_is_card
 
 
-def detect_cards(image, dst=None) -> list:
+def detect_cards(image, dst=None) -> tuple:
     # Pre-process camera image (gray, blur, and threshold it)
     pre_proc = card_detection_functions.preprocess_image(image)
 
@@ -70,7 +70,7 @@ def detect_cards(image, dst=None) -> list:
     cnts_sort, cnt_is_card = card_detection_functions.find_cards(pre_proc)
 
     if not np.any(cnt_is_card):
-        return []
+        return [], []
 
     cnts_sort, cnt_is_card = remove_non_card_contours(cnts_sort, cnt_is_card)
     cnts_sort, cnt_is_card = remove_inclusive_contours(cnts_sort, cnt_is_card)
@@ -111,4 +111,4 @@ def detect_cards(image, dst=None) -> list:
                 for i in range(len(cards)):
                     temp_cnts.append(cards[i].contour)
                 cv2.drawContours(dst, temp_cnts, -1, (255, 0, 0), 2)
-    return [card.to_poker_card() for card in cards]
+    return [card.to_poker_card() for card in cards], [card.contour for card in cards]

@@ -23,7 +23,7 @@ def setup():
         _clf, _ = _train_classifier(input_data, output_data, "chip_classifier.joblib")
 
 
-def detect_chips(img, dst=None) -> List[PokerChip]:
+def detect_chips(img, dst=None, card_cnts: list = None) -> List[PokerChip]:
     global _clf
 
     # convert image to grayscale
@@ -37,9 +37,40 @@ def detect_chips(img, dst=None) -> List[PokerChip]:
 
     circles = _detect_circles(gray)
 
+    if circles is None:
+        return []
+
+    if card_cnts is not None:
+        circles = _remove_circles_in_contour(circles, card_cnts)
+
     poker_chips = _predict_chips(hsv_img, _clf, circles, dst=dst)
 
     return poker_chips
+
+
+def _remove_circles_in_contour(circles: list, cnts: list):
+    circles_to_remove = []
+    for i in range(len(circles[0])):
+        x, y, d = circles[0][i]
+        for cnt in cnts:
+            points = [(x, y), (x + d, y), (x - d, y), (x, y + d), (x, y - d)]
+            circle_in_cnts = False
+
+            for point in points:
+                dist = cv2.pointPolygonTest(cnt, point, False)
+                if dist >= 0:
+                    circle_in_cnts = True
+                    break
+            if circle_in_cnts:
+                circles_to_remove.append(i)
+                break
+    if len(circles_to_remove) == 0:
+        return circles
+
+    circles_temp = np.delete(circles[0], circles_to_remove, axis=0)
+    circles_result = np.empty((1,) + circles_temp.shape)
+    circles_result[0] = circles_temp
+    return circles_result
 
 
 def _calc_histogram(hsv_img):
@@ -138,29 +169,37 @@ def _predict_chip(clf, roi) -> PokerChip:
 
 
 def _predict_chips(src, clf, circles, dst=None) -> List[PokerChip]:
+    if len(circles) == 0:
+        return []
+
     predictions = []
-    if circles is not None:
-        # convert coordinates and radii to integers
-        circles = np.round(circles[0, :]).astype("int")
 
-        # loop over coordinates and radii of the circles
-        for (x, y, d) in circles:
-            # extract region of interest
-            roi = src[y - d:y + d, x - d:x + d]
-            roi = cv2.resize(roi, (128, 128))
+    # convert coordinates and radii to integers
+    circles = np.round(circles[0, :]).astype("int")
 
-            # try recognition of chip feature and add result to list
-            prediction = _predict_chip(clf, roi)
-            predictions.append(prediction)
+    # loop over coordinates and radii of the circles
+    for (x, y, d) in circles:
+        # extract region of interest
+        roi = src[y - d:y + d, x - d:x + d]
 
-            if prediction.name == PokerChip.unknown.name:
-                continue
+        if roi.size == 0:
+            continue
 
-            # draw contour and results in the output image
-            if dst is not None:
-                cv2.circle(dst, (x, y), d, (0, 255, 0), 2)
-                cv2.putText(dst, prediction.name, (x - 40, y - 40), cv2.FONT_HERSHEY_PLAIN,
-                            1.5, (0, 0, 255), thickness=2, lineType=cv2.LINE_AA)
-                cv2.putText(dst, str(prediction.value), (x - 40, y), cv2.FONT_HERSHEY_PLAIN,
-                            1.5, (0, 0, 255), thickness=2, lineType=cv2.LINE_AA)
+        roi = cv2.resize(roi, (128, 128))
+
+        # try recognition of chip feature and add result to list
+        prediction = _predict_chip(clf, roi)
+        predictions.append(prediction)
+
+        if prediction.name == PokerChip.unknown.name:
+            continue
+
+        # draw contour and results in the output image
+        if dst is not None:
+            cv2.circle(dst, (x, y), d, (0, 255, 0), 2)
+            cv2.putText(dst, prediction.name, (x - 40, y - 40), cv2.FONT_HERSHEY_PLAIN,
+                        1.5, (0, 0, 255), thickness=2, lineType=cv2.LINE_AA)
+            cv2.putText(dst, str(prediction.value), (x - 40, y), cv2.FONT_HERSHEY_PLAIN,
+                        1.5, (0, 0, 255), thickness=2, lineType=cv2.LINE_AA)
+
     return predictions
