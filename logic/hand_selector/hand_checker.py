@@ -13,7 +13,7 @@ class Checker:
 
     @staticmethod
     def get_best_hand(player_cards: List[PokerCard], community_cards: List[PokerCard]) -> PokerHand:
-        best_hand = PokerHand.highest_rank
+        best_hand = PokerHand.high_card
         for i in range(6):
             possible_combos = combinations(player_cards, 5 - i)
             for combo in possible_combos:
@@ -28,11 +28,13 @@ class Checker:
     def check_hand(hand: List[PokerCard]) -> PokerHand:
         if Checker._check_royal_flush(hand):
             return PokerHand.royal_flush
+        if Checker._check_royal_flush(hand):
+            return PokerHand.royal_straight
         if Checker._check_four_of_a_kind(hand):
             return PokerHand.four_of_a_kind
         if Checker._check_full_house(hand):
             return PokerHand.full_house
-        if Checker._check_flush(hand):
+        if Checker._check_royal(hand):
             return PokerHand.flush
         if Checker._check_straight(hand):
             return PokerHand.straight
@@ -41,12 +43,19 @@ class Checker:
         if Checker._check_two_pair(hand):
             return PokerHand.two_pairs
         if Checker._check_pair(hand):
-            return PokerHand.one_pair
-        return PokerHand.highest_rank
+            return PokerHand.pair
+        return PokerHand.high_card
 
     @staticmethod
     def _check_royal_flush(hand: List[PokerCard]) -> bool:
-        if Checker._check_flush(hand) and Checker._check_straight(hand):
+        if Checker._check_royal(hand) and Checker._check_royal(hand):
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def _check_royal_straight(hand: List[PokerCard]) -> bool:
+        if Checker._check_royal(hand) and Checker._check_straight(hand):
             return True
         else:
             return False
@@ -71,7 +80,7 @@ class Checker:
             return False
 
     @staticmethod
-    def _check_flush(hand: List[PokerCard]) -> bool:
+    def _check_royal(hand: List[PokerCard]) -> bool:
         suits = [card.suit.value for card in hand]
         if len(set(suits)) == 1:
             return True
@@ -125,7 +134,7 @@ def get_best_hand_example():
             PokerCard(CardRank.two, CardSuit.hearts), PokerCard(CardRank.three, CardSuit.hearts),
             PokerCard(CardRank.four, CardSuit.hearts)]
     deck = [PokerCard(CardRank.five, CardSuit.spades), PokerCard(CardRank.six, CardSuit.diamonds)]
-    print(Checker.get_best_hand(hand, deck))
+    # print(Checker.get_best_hand(hand, deck))
 
 
 def check_hand_examples():
@@ -142,6 +151,8 @@ def check_hand_examples():
               PokerCard(CardRank.jack, CardSuit.hearts), PokerCard(CardRank.king, CardSuit.hearts)]
     hand_6 = [card_1, card_1, card_1, card_2, card_2]
     hand_7 = [card_1, card_1, card_1, card_1, card_3]
+
+    print(Checker.get_best_hand([card_1, card_3], hand_6))
 
     print("Is {} pair: {}".format(hand_1, Checker._check_pair(hand_1)))
     print("Is {} two pair: {}".format(hand_2, Checker._check_two_pair(hand_2)))

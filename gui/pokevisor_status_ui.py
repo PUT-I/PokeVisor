@@ -94,9 +94,9 @@ class PokeVisorStatusUi(Tk):
 
             cards_to_print = ""
             for card in community_cards:
-                cards_to_print += card_rank_symbols[card.rank.name] + card_suit_symbols[card.suit.name] + ", "
-                print(card.rank.name + " " + card.suit.name)
-            self._community_cards.set(cards_to_print)
+                cards_to_print += "{}{}, ".format(card_rank_symbols[card.rank.name], card_suit_symbols[card.suit.name])
+                print("{} {}".format(card.rank.name, card.suit.name))
+            self._community_cards.set(cards_to_print[:-2])
 
             if len(community_cards) == 0:
                 self._game_stage.set("Preflop")
@@ -122,7 +122,7 @@ class PokeVisorStatusUi(Tk):
                 for card in player.cards:
                     cards += "{}{}, ".format(card_rank_symbols[card.rank.name], card_suit_symbols[card.suit.name])
                     print(card.rank.name + " " + card.suit.name)
-                self._player_cards_list[i].set(cards)
+                self._player_cards_list[i].set(cards[:-2])
 
                 self._player_chips_list[i].set("has {} value in chips".format(player.sum_chip_values()))
                 self._player_hand_list[i].set(str(player.hand))

@@ -14,7 +14,7 @@ from logic.card_detector import card_detection_functions
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 # Load the train rank and suit images
-path = os.path.dirname(os.path.abspath(__file__))
+path = os.getcwd()
 train_ranks = card_detection_functions.load_ranks(path + "/sample_images/")
 train_suits = card_detection_functions.load_suits(path + "/sample_images/")
 
