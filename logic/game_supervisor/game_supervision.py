@@ -11,7 +11,7 @@ from gui.pokevisor_status_ui import PokeVisorStatusUi
 from logic.card_detector import card_detection
 from logic.chip_detector import chip_detection
 from logic.game_supervisor import game_image_processing
-from logic.hand_selector.hand_checker import Checker
+from logic.hand_selecter.hand_checking import Checker
 
 image = np.zeros((1, 1))
 
