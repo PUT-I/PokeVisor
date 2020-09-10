@@ -19,8 +19,20 @@ def setup():
 
     _clf = _load_classifier("chip_classifier.joblib")
     if _clf is None:
-        input_data, output_data = _create_training_data_sets()
+        input_data, output_data = _create_training_data_sets("sample_images")
         _clf, _ = _train_classifier(input_data, output_data, "chip_classifier.joblib")
+
+
+def generate_classifier(sample_images_path: str, output_filename: str):
+    if not os.path.isdir(sample_images_path):
+        raise FileNotFoundError
+
+    input_data, output_data = _create_training_data_sets(sample_images_path)
+
+    if not input_data or not output_data:
+        raise FileNotFoundError
+
+    _, _ = _train_classifier(input_data, output_data, output_filename)
 
 
 def detect_chips(img, dst=None, card_cnts: list = None) -> List[PokerChip]:
@@ -94,12 +106,12 @@ def _calc_hist_from_file(file):
     return _calc_histogram(img)
 
 
-def _create_training_data_sets():
+def _create_training_data_sets(sample_images_path: str):
     # locate sample image files
     sample_images = []
     for enum in PokerChip:
         sample_images.append(
-            (enum, glob.glob("{}/{}/*".format("sample_images/", enum.name)))
+            (enum, glob.glob("{}/{}/*".format(sample_images_path, enum.name)))
         )
 
     # define training data and labels
