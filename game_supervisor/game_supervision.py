@@ -1,15 +1,62 @@
 import argparse
-from math import cos, sin
+import time
+from typing import List
 
 import cv2
 import numpy as np
 
 from card_detector import card_detection
+from card_detector.classes.poker_card import PokerCard
+from chip_detector import chip_detection
+from game_supervisor import game_image_processing
+from hand_selector.hand_checker import Checker
 
 image = np.zeros((1, 1))
 
 
-def parse_arguments():
+def supervise(frame: np.ndarray, dst: np.ndarray = None) -> tuple:
+    community_image, player_images = game_image_processing.divide_table(frame)
+    community_cards, community_cards_cnt = card_detection.detect_cards(community_image, dst)
+    community_chips = chip_detection.detect_chips(community_image, dst, community_cards_cnt)
+
+    player_cards_list = []
+    player_chips_list = []
+    for i in range(len(player_images)):
+        cards, cards_cnt = card_detection.detect_cards(player_images[i], dst)
+        chips = chip_detection.detect_chips(player_images[i], dst, cards_cnt)
+        player_cards_list.append(cards)
+        player_chips_list.append(chips)
+
+    return community_cards, player_cards_list, community_chips, player_chips_list
+
+
+def supervise_video(cap) -> None:
+    fps = 60
+    frame_time = round(1000 / fps)
+
+    while cap.isOpened():
+        start_time = time.time()
+        ret, frame = cap.read()
+
+        if not ret:
+            break
+
+        community_cards, player_cards_list, community_chips, player_chips_list = supervise(frame, dst=frame)
+
+        table = game_image_processing.put_overlay_on_image(frame)
+        _check_if_cards_uncovered(community_cards, player_cards_list)
+
+        cv2.imshow('frame', table)
+        duration = time.time() - start_time
+        wait_time = round(frame_time - duration * 1000)
+        if wait_time < 1:
+            wait_time = 1
+        if cv2.waitKey(wait_time) & 0xFF == ord('q'):
+            break
+    cv2.destroyAllWindows()
+
+
+def _parse_arguments() -> vars:
     # construct argument parser and parse arguments
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", required=False, help="path to image", default="cards_input.png")
@@ -17,129 +64,67 @@ def parse_arguments():
     return vars(ap.parse_args())
 
 
-def calculate_point(origin_point, angle, length):
-    x = round(origin_point[0] + length * cos(angle * np.pi / 180.0))
-    y = round(origin_point[1] + length * sin(angle * np.pi / 180.0))
-    return x, y
+def _check_if_cards_uncovered(community_cards: List[PokerCard], player_cards_list: List[List[PokerCard]]) -> None:
+    for card in community_cards:
+        if card.is_unknown():
+            return
+
+    for player_cards in player_cards_list:
+        if len(player_cards) == 0:
+            return
+
+        for card in player_cards:
+            if card.is_unknown():
+                return
+
+    print("Cards uncovered")
+    player_num = 1
+    for player_cards in player_cards_list:
+        hand = Checker.get_best_hand(player_cards, community_cards)
+        print("Player {} has {}".format(player_num, hand.name))
+        player_num += 1
 
 
-def divide_table(img, players=4):
-    height, width, _ = img.shape
-
-    if width > height:
-        length = width
-    else:
-        length = height
-
-    center = (round(width / 2), round(height / 2))
-    angular_step = 360 / players
-
-    result = []
-    for i in range(0, players):
-        edge_point_1 = calculate_point(center, angular_step * i, length)
-        edge_point_2 = calculate_point(center, angular_step * (i + 1), length)
-
-        mask = np.zeros((height, width), np.uint8)
-
-        if players == 2:
-            if i == 0:
-                corner_point_1 = (width - 1, 0)
-                corner_point_2 = (0, 0)
-            else:
-                corner_point_1 = (0, height - 1)
-                corner_point_2 = (width - 1, height - 1)
-            points = np.array([[center, edge_point_1, corner_point_1, corner_point_2, edge_point_2]])
-        elif players == 3 and i % 2 == 0:
-            if i == 2:
-                corner_point = (width - 1, 0)
-            else:
-                corner_point = (width - 1, height - 1)
-            points = np.array([[center, edge_point_1, corner_point, edge_point_2]])
-        else:
-            points = np.array([[center, edge_point_1, edge_point_2]])
-        cv2.fillPoly(mask, points, (255,))
-
-        cutout = cv2.bitwise_and(img, img, mask=mask)
-
-        gray = cv2.cvtColor(cutout, cv2.COLOR_BGR2GRAY)
-        contours, hierarchy = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cnt = contours[0]
-
-        moments = cv2.moments(cnt)
-        cutout_center = (round(moments["m10"] / moments["m00"]), round(moments["m01"] / moments["m00"]))
-        cv2.putText(cutout, "Player {}".format(str(i + 1)),
-                    cutout_center, cv2.FONT_HERSHEY_PLAIN,
-                    2, (255, 0, 255), lineType=cv2.LINE_AA, thickness=2)
-
-        result.append(cutout)
-    return result
-
-
-def supervise(frame, players=4):
-    player_images = divide_table(frame, players)
-
-    table_image = np.zeros(frame.shape, np.uint8)
-    player_cards = []
-    for i in range(len(player_images)):
-        cards = card_detection.detect_cards(player_images[i], frame)
-        player_cards.append(cards)
-        table_image += player_images[i]
-
-    return table_image, player_cards
-
-
-def supervise_video(cap, players=4):
-    fps = 60
-    frame_time = round(1000 / fps)
-
-    while cap.isOpened():
-        ret, frame = cap.read()
-
-        table, _ = supervise(frame, players)
-
-        cv2.imshow('frame', table)
-        if cv2.waitKey(frame_time) & 0xFF == ord('q'):
-            break
-    cv2.destroyAllWindows()
-
-
-def image_example():
+def _image_example():
     global image
 
-    args = parse_arguments()
+    args = _parse_arguments()
     image = cv2.imread(args["image"])
-    players = 4
 
-    divided, _ = supervise(image, players)
+    game_image_processing.setup(image)
 
-    cv2.imshow("example", divided)
+    community_cards, player_cards_list, community_chips, player_chips_list = supervise(image, dst=image)
 
-    def callback(players):
-        global image
+    print("Community cards: {}".format(community_cards))
+    print("Community chips: {}".format([chip.name for chip in community_chips]))
 
-        if players < 2:
-            players = 2
+    for i in range(len(player_cards_list)):
+        print("Player {} cards: {}".format(i + 1, player_cards_list[i]))
+        print("Player {} chips: {}".format(i + 1, [chip.name for chip in player_chips_list[i]]))
 
-        table_image, _ = supervise(image, players)
-        cv2.imshow("example", table_image)
+    image = game_image_processing.put_overlay_on_image(image)
 
-    cv2.createTrackbar("players", "example", players, 8, callback)
-
+    cv2.imshow("example", image)
     cv2.waitKey()
     cv2.destroyAllWindows()
 
 
-def movie_example():
-    args = parse_arguments()
+def _video_example():
+    args = _parse_arguments()
 
     cap = cv2.VideoCapture(args["movie"])
-    supervise_video(cap, players=2)
+
+    _, frame = cap.read()
+
+    game_image_processing.setup(frame)
+
+    supervise_video(cap)
     cap.release()
 
 
-def main():
-    image_example()
+def _main():
+    _video_example()
 
 
 if __name__ == "__main__":
-    main()
+    _main()

@@ -1,14 +1,79 @@
 import glob
+import os
+from typing import Optional, List
 
 import cv2
 import numpy as np
+from joblib import dump, load
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 
 from chip_detector.classes.poker_chip_enum import PokerChip
 
+# noinspection PyTypeChecker
+_clf: MLPClassifier = None
 
-def calc_histogram(hsv_img):
+
+def setup():
+    global _clf
+
+    _clf = _load_classifier("chip_classifier.joblib")
+    if _clf is None:
+        input_data, output_data = _create_training_data_sets()
+        _clf, _ = _train_classifier(input_data, output_data, "chip_classifier.joblib")
+
+
+def detect_chips(img, dst=None, card_cnts: list = None) -> List[PokerChip]:
+    global _clf
+
+    # convert image to grayscale
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    # improve contrast accounting for differences in lighting conditions:
+    # create a CLAHE object to apply contrast limiting adaptive histogram equalization
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    gray = clahe.apply(gray)
+
+    circles = _detect_circles(gray)
+
+    if circles is None:
+        return []
+
+    if card_cnts is not None:
+        circles = _remove_circles_in_contour(circles, card_cnts)
+
+    poker_chips = _predict_chips(hsv_img, _clf, circles, dst=dst)
+
+    return poker_chips
+
+
+def _remove_circles_in_contour(circles: list, cnts: list):
+    circles_to_remove = []
+    for i in range(len(circles[0])):
+        x, y, d = circles[0][i]
+        for cnt in cnts:
+            points = [(x, y), (x + d, y), (x - d, y), (x, y + d), (x, y - d)]
+            circle_in_cnts = False
+
+            for point in points:
+                dist = cv2.pointPolygonTest(cnt, point, False)
+                if dist >= 0:
+                    circle_in_cnts = True
+                    break
+            if circle_in_cnts:
+                circles_to_remove.append(i)
+                break
+    if len(circles_to_remove) == 0:
+        return circles
+
+    circles_temp = np.delete(circles[0], circles_to_remove, axis=0)
+    circles_result = np.empty((1,) + circles_temp.shape)
+    circles_result[0] = circles_temp
+    return circles_result
+
+
+def _calc_histogram(hsv_img):
     # hsv_img = cv2.resize(hsv_img, (128, 128))
 
     # create mask
@@ -23,13 +88,13 @@ def calc_histogram(hsv_img):
     return cv2.normalize(h, h).flatten()
 
 
-def calc_hist_from_file(file):
+def _calc_hist_from_file(file):
     img = cv2.imread(file)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    return calc_histogram(img)
+    return _calc_histogram(img)
 
 
-def create_color_training_data_sets():
+def _create_training_data_sets():
     # locate sample image files
     sample_images = []
     for enum in PokerChip:
@@ -43,15 +108,20 @@ def create_color_training_data_sets():
 
     for enum, glob_elem in sample_images:
         for i in glob_elem:
-            input_data.append(calc_hist_from_file(i))
+            input_data.append(_calc_hist_from_file(i))
             output_data.append(enum.name)
     return input_data, output_data
 
 
-def train_classifier(input_data, output_data):
+def _load_classifier(filename: str) -> Optional[MLPClassifier]:
+    if not os.path.isfile(filename):
+        return None
+    return load(filename)
+
+
+def _train_classifier(input_data, output_data, filename: str = None):
     # instantiate classifier
     # Multi-layer Perceptron
-    # score: 0.974137931034
     clf = MLPClassifier(solver="lbfgs")
 
     # split samples into training and test data
@@ -60,10 +130,14 @@ def train_classifier(input_data, output_data):
     # train and score classifier
     clf.fit(x_train, y_train)
     score = int(clf.score(x_test, y_test) * 100)
+
+    if filename is not None:
+        dump(clf, filename)
+
     return clf, score
 
 
-def detect_circles(image):
+def _detect_circles(image):
     # blur the image using Gaussian blurring, where pixels closer to the center
     # contribute more "weight" to the average, first argument is the source image,
     # second argument is kernel size, third one is sigma (0 for autodetect)
@@ -84,9 +158,9 @@ def detect_circles(image):
     return circles
 
 
-def predict_color(clf, roi):
+def _predict_chip(clf, roi) -> PokerChip:
     # calculate feature vector for region of interest
-    hist = calc_histogram(roi)
+    hist = _calc_histogram(roi)
 
     # predict chip value
     s = clf.predict([hist])
@@ -94,50 +168,38 @@ def predict_color(clf, roi):
     return PokerChip[s[0]]
 
 
-def predict_chip_colors(src, clf, circles, dst=None):
+def _predict_chips(src, clf, circles, dst=None) -> List[PokerChip]:
+    if len(circles) == 0:
+        return []
+
     predictions = []
-    if circles is not None:
-        # convert coordinates and radii to integers
-        circles = np.round(circles[0, :]).astype("int")
 
-        # loop over coordinates and radii of the circles
-        for (x, y, d) in circles:
-            # extract region of interest
-            roi = src[y - d:y + d, x - d:x + d]
-            roi = cv2.resize(roi, (128, 128))
+    # convert coordinates and radii to integers
+    circles = np.round(circles[0, :]).astype("int")
 
-            # try recognition of chip feature and add result to list
-            prediction = predict_color(clf, roi)
-            predictions.append(prediction)
+    # loop over coordinates and radii of the circles
+    for (x, y, d) in circles:
+        # extract region of interest
+        roi = src[y - d:y + d, x - d:x + d]
 
-            if prediction.name == 'unknown':
-                continue
+        if roi.size == 0:
+            continue
 
-            # draw contour and results in the output image
-            if dst is not None:
-                cv2.circle(dst, (x, y), d, (0, 255, 0), 2)
-                cv2.putText(dst, prediction.name, (x - 40, y - 40), cv2.FONT_HERSHEY_PLAIN,
-                            1.5, (0, 0, 255), thickness=2, lineType=cv2.LINE_AA)
-                cv2.putText(dst, str(prediction.value), (x - 40, y), cv2.FONT_HERSHEY_PLAIN,
-                            1.5, (0, 0, 255), thickness=2, lineType=cv2.LINE_AA)
+        roi = cv2.resize(roi, (128, 128))
+
+        # try recognition of chip feature and add result to list
+        prediction = _predict_chip(clf, roi)
+        predictions.append(prediction)
+
+        if prediction.name == PokerChip.unknown.name:
+            continue
+
+        # draw contour and results in the output image
+        if dst is not None:
+            cv2.circle(dst, (x, y), d, (0, 255, 0), 2)
+            cv2.putText(dst, prediction.name, (x - 40, y - 40), cv2.FONT_HERSHEY_PLAIN,
+                        1.5, (0, 0, 255), thickness=2, lineType=cv2.LINE_AA)
+            cv2.putText(dst, str(prediction.value), (x - 40, y), cv2.FONT_HERSHEY_PLAIN,
+                        1.5, (0, 0, 255), thickness=2, lineType=cv2.LINE_AA)
+
     return predictions
-
-
-def detect_chips(img, dst=None) -> list:
-    # convert image to grayscale
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-    # improve contrast accounting for differences in lighting conditions:
-    # create a CLAHE object to apply contrast limiting adaptive histogram equalization
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    gray = clahe.apply(gray)
-
-    input_color_data, output_color_data = create_color_training_data_sets()
-    clf_color, _ = train_classifier(input_color_data, output_color_data)
-
-    circles = detect_circles(gray)
-
-    chip_colors = predict_chip_colors(hsv_img, clf_color, circles, dst=dst)
-
-    return chip_colors

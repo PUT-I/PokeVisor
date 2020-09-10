@@ -3,7 +3,7 @@ from enum import Enum
 
 # Enumerate chip color types for use in classifier
 class PokerChip(Enum):
-    unknown = -1
+    unknown = 0
     gray = 1
     red = 5
     blue = 10

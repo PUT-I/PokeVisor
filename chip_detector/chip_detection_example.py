@@ -27,6 +27,7 @@ def main():
     # create a copy of the image to display results
     output = image.copy()
 
+    chip_detection.setup()
     chips = chip_detection.detect_chips(image, output)
     print(chips)
 
