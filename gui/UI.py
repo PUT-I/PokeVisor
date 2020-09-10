@@ -11,25 +11,39 @@ from tkinter import *
 class TUI:
     @staticmethod
     def write__turn(community_cards, list_of_players):
+        community_cards_row1 = Entry(relief=RIDGE, width=70)
+        community_cards_row1.grid(row=1, column=1, sticky=NSEW)
+        community_cards_row1.insert(END, "Community Cards")
+
+        community_cards_row2 = Entry(relief=RIDGE, width=70)
+        community_cards_row2.grid(row=1, column=2, sticky=NSEW)
         if len(community_cards) == 0:
+            community_cards_row2.insert(END, "Preflop")
             print("preflop")
         elif len(community_cards) == 3:
+            community_cards_row2.insert(END, "Flop")
             print("flop")
             print("community cards")
         elif len(community_cards) == 4:
+            community_cards_row2.insert(END, "Turn")
             print("turn")
             print("community cards")
         elif len(community_cards) == 5:
+            community_cards_row2.insert(END, "River")
             print("river")
             print("community cards")
-
+        cards_to_print = ""
         for card in community_cards:
+            cards_to_print += card.rank.name + " " + card.suit.name + ", "
             print(card.rank.name + " " + card.suit.name)
+        community_cards_row3 = Entry(relief=RIDGE, width=70)
+        community_cards_row3.grid(row=1, column=3, sticky=NSEW)
+        community_cards_row3.insert(END, cards_to_print)
 
         for player in list_of_players:
-            row1 = Entry(relief=RIDGE)
-            row1.grid(row=1, column=list_of_players.index(player)+1, sticky=NSEW)
-            row1.insert(END, player.name)
+            player_column1 = Entry(relief=RIDGE, width=70)
+            player_column1.grid(row=list_of_players.index(player)+2, column=1, sticky=NSEW)
+            player_column1.insert(END, player.name)
 
             print(player.name + "\n Cards:")
             cards = ""
@@ -37,13 +51,13 @@ class TUI:
                 cards += card.rank.name + " " + card.suit.name + ", "
                 print(card.rank.name + " " + card.suit.name)
 
-            row2 = Entry(relief=RIDGE)
-            row2.grid(row=2, column=list_of_players.index(player)+1, sticky=NSEW)
-            row2.insert(END, cards)
+            player_column2 = Entry(relief=RIDGE)
+            player_column2.grid(row=list_of_players.index(player)+2, column=2, sticky=NSEW)
+            player_column2.insert(END, cards)
 
-            row3 = Entry(relief=RIDGE)
-            row3.grid(row=3, column=list_of_players.index(player)+1, sticky=NSEW)
-            row3.insert(END, "{} has {} value in chips".format(player.name, player.sum_chip_values()))
+            player_column3 = Entry(relief=RIDGE)
+            player_column3.grid(row=list_of_players.index(player)+2, column=3, sticky=NSEW)
+            player_column3.insert(END, "has {} value in chips".format(player.sum_chip_values()))
 
             print("{} has {} value in chips".format(player.name, player.sum_chip_values()))
 
