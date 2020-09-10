@@ -2,13 +2,14 @@ from typing import List, Dict
 
 from card_detector.classes.poker_card import PokerCard
 from chip_detector.classes.poker_chip_enum import PokerChip
+from hand_selector.classes.poker_hand_enum import PokerHand
 
 
 class Player:
-    def __init__(self, name: str):
-        self.name: str = name
+    def __init__(self):
         self.cards: List[PokerCard] = []
         self.chips: Dict[PokerChip, int] = {}
+        self.hand: PokerHand = PokerHand.unknown
 
     def sum_chip_values(self):
         chip_sum = 0
@@ -18,12 +19,12 @@ class Player:
 
 
 def main():
-    player = Player("Player 1")
+    player = Player()
     player.chips[PokerChip.purple] = 1
     player.chips[PokerChip.red] = 6
     player.chips[PokerChip.green] = 8
 
-    print("Player {} has {} value in chips".format(player.name, player.sum_chip_values()))
+    print("Player has {} value in chips".format(player.sum_chip_values()))
 
 
 if __name__ == "__main__":

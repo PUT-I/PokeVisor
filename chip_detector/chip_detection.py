@@ -12,15 +12,21 @@ from chip_detector.classes.poker_chip_enum import PokerChip
 
 # noinspection PyTypeChecker
 _clf: MLPClassifier = None
+_enabled = True
 
 
-def setup():
+def disable():
+    global _enabled
+    _enabled = False
+
+
+def setup(classifier_path: str = "chip_classifier.joblib"):
     global _clf
 
-    _clf = _load_classifier("chip_classifier.joblib")
+    _clf = _load_classifier(classifier_path)
     if _clf is None:
         input_data, output_data = _create_training_data_sets("sample_images")
-        _clf, _ = _train_classifier(input_data, output_data, "chip_classifier.joblib")
+        _clf, _ = _train_classifier(input_data, output_data, classifier_path)
 
 
 def generate_classifier(sample_images_path: str, output_filename: str):
@@ -36,7 +42,10 @@ def generate_classifier(sample_images_path: str, output_filename: str):
 
 
 def detect_chips(img, dst=None, card_cnts: list = None) -> List[PokerChip]:
-    global _clf
+    global _clf, _enabled
+
+    if not _enabled:
+        return []
 
     # convert image to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)

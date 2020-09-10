@@ -2,12 +2,16 @@ from enum import Enum
 
 
 class PokerHand(Enum):
-    highest_rank = 1
-    one_pair = 2
-    two_pairs = 3
-    three_of_a_kind = 4
-    straight = 5
-    flush = 6
-    full_house = 7
-    four_of_a_kind = 8
-    royal_flush = 9
+    unknown = "Unknown"
+    highest_rank = "High Card"
+    one_pair = "Pair"
+    two_pairs = "Two pair"
+    three_of_a_kind = "Three of a Kind"
+    straight = "Straight"
+    flush = "Flush"
+    full_house = "Full House"
+    four_of_a_kind = "Four of a Kind"
+    royal_flush = "Royal Flush"
+
+    def __str__(self):
+        return self.value

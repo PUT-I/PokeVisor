@@ -9,7 +9,9 @@ from card_detector import card_detection
 from card_detector.classes.poker_card import PokerCard
 from chip_detector import chip_detection
 from game_supervisor import game_image_processing
+from gui.pokevisor_status_ui import PokeVisorStatusUi
 from hand_selector.hand_checker import Checker
+from visualization.classes.player import Player
 
 image = np.zeros((1, 1))
 
@@ -24,13 +26,14 @@ def supervise(frame: np.ndarray, dst: np.ndarray = None) -> tuple:
     for i in range(len(player_images)):
         cards, cards_cnt = card_detection.detect_cards(player_images[i], dst)
         chips = chip_detection.detect_chips(player_images[i], dst, cards_cnt)
-        player_cards_list.append(cards)
+        player_cards_list.append(sorted(cards))
         player_chips_list.append(chips)
 
-    return community_cards, player_cards_list, community_chips, player_chips_list
+    return sorted(community_cards), player_cards_list, community_chips, player_chips_list
 
 
 def supervise_video(cap) -> None:
+    status_ui = PokeVisorStatusUi(players=2)
     fps = 60
     frame_time = round(1000 / fps)
 
@@ -44,7 +47,17 @@ def supervise_video(cap) -> None:
         community_cards, player_cards_list, community_chips, player_chips_list = supervise(frame, dst=frame)
 
         table = game_image_processing.put_overlay_on_image(frame)
-        _check_if_cards_uncovered(community_cards, player_cards_list)
+        if _check_if_cards_uncovered(community_cards, player_cards_list):
+            players = []
+            for i in range(len(player_cards_list)):
+                player = Player()
+                player.cards = player_cards_list[i]
+                player.chips = player_chips_list[i]
+                player.hand = Checker.get_best_hand(player.cards, community_cards)
+                players.append(player)
+            status_ui.write_turn(community_cards, players)
+        elif len([card for card in community_cards if card.is_unknown()]) == 0:
+            status_ui.write_turn(community_cards, [])
 
         cv2.imshow('frame', table)
         duration = time.time() - start_time
@@ -54,6 +67,8 @@ def supervise_video(cap) -> None:
         if cv2.waitKey(wait_time) & 0xFF == ord('q'):
             break
     cv2.destroyAllWindows()
+    status_ui.destroy()
+    cap.release()
 
 
 def _parse_arguments() -> vars:
@@ -64,25 +79,21 @@ def _parse_arguments() -> vars:
     return vars(ap.parse_args())
 
 
-def _check_if_cards_uncovered(community_cards: List[PokerCard], player_cards_list: List[List[PokerCard]]) -> None:
+def _check_if_cards_uncovered(community_cards: List[PokerCard], player_cards_list: List[List[PokerCard]]) -> bool:
     for card in community_cards:
         if card.is_unknown():
-            return
+            return False
 
     for player_cards in player_cards_list:
         if len(player_cards) == 0:
-            return
+            return False
 
         for card in player_cards:
             if card.is_unknown():
-                return
+                return False
 
     print("Cards uncovered")
-    player_num = 1
-    for player_cards in player_cards_list:
-        hand = Checker.get_best_hand(player_cards, community_cards)
-        print("Player {} has {}".format(player_num, hand.name))
-        player_num += 1
+    return True
 
 
 def _image_example():
@@ -116,7 +127,7 @@ def _video_example():
 
     _, frame = cap.read()
 
-    game_image_processing.setup(frame)
+    game_image_processing.setup(frame, detect_chips=False)
 
     supervise_video(cap)
     cap.release()

@@ -34,8 +34,12 @@ def put_overlay_on_image(img):
     return img_result
 
 
-def setup(img):
-    chip_detection.setup()
+def setup(img, classifier_path: str = "chip_classifier.joblib", detect_chips: bool = True):
+    _detect_chips = detect_chips
+    if _detect_chips:
+        chip_detection.setup(classifier_path)
+    else:
+        chip_detection.disable()
 
     def _common_callback():
         global _players, _community_cards_offset

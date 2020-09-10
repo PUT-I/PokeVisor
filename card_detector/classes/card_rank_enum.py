@@ -3,7 +3,7 @@ from enum import Enum
 
 # Enumerate chip color types for use in classifier
 class CardRank(Enum):
-    unknown = -1
+    unknown = 0
     ace = 1
     two = 2
     three = 3
