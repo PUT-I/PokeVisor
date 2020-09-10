@@ -5,13 +5,13 @@ from typing import List
 import cv2
 import numpy as np
 
-from card_detector import card_detection
-from card_detector.classes.poker_card import PokerCard
-from chip_detector import chip_detection
-from game_supervisor import game_image_processing
+from classes.player import Player
+from classes.poker_card import PokerCard
 from gui.pokevisor_status_ui import PokeVisorStatusUi
-from hand_selector.hand_checker import Checker
-from visualization.classes.player import Player
+from logic.card_detector import card_detection
+from logic.chip_detector import chip_detection
+from logic.game_supervisor import game_image_processing
+from logic.hand_selector.hand_checker import Checker
 
 image = np.zeros((1, 1))
 

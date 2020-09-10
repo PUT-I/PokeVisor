@@ -5,12 +5,12 @@
 import cv2
 import numpy as np
 
+from classes.card_detector.poker_card_info import PokerCardInfo
+from classes.card_detector.train_ranks import TrainRanks
+from classes.card_detector.train_suits import TrainSuits
 # Adaptive threshold levels
-from card_detector.classes.card_rank_enum import CardRank
-from card_detector.classes.card_suit_enum import CardSuit
-from card_detector.classes.poker_card_info import PokerCardInfo
-from card_detector.classes.train_ranks import TrainRanks
-from card_detector.classes.train_suits import TrainSuits
+from enums.card_rank_enum import CardRank
+from enums.card_suit_enum import CardSuit
 
 # Constants #
 

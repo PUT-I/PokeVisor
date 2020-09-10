@@ -2,11 +2,11 @@ from collections import defaultdict
 from itertools import combinations
 from typing import List
 
-from card_detector.classes.card_rank_enum import CardRank
-from card_detector.classes.card_suit_enum import CardSuit
-from card_detector.classes.poker_card import PokerCard
+from classes.poker_card import PokerCard
+from enums.card_rank_enum import CardRank
+from enums.card_suit_enum import CardSuit
 # hand is best 5 cards
-from hand_selector.classes.poker_hand_enum import PokerHand
+from enums.poker_hand_enum import PokerHand
 
 
 class Checker:

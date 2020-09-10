@@ -5,7 +5,7 @@ from tkinter import filedialog
 
 import cv2
 
-from game_supervisor import game_image_processing, game_supervision
+from logic.game_supervisor import game_image_processing, game_supervision
 
 
 class PokeVisorVideoUi(Tk):

@@ -7,9 +7,9 @@ from typing import List
 import cv2
 import numpy as np
 
-from card_detector import card_detection_functions
 # Define font to use
-from card_detector.classes.poker_card_info import PokerCardInfo
+from classes.card_detector.poker_card_info import PokerCardInfo
+from logic.card_detector import card_detection_functions
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 

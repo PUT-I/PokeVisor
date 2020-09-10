@@ -1,5 +1,5 @@
-from card_detector.classes.card_rank_enum import CardRank
-from card_detector.classes.card_suit_enum import CardSuit
+from enums.card_rank_enum import CardRank
+from enums.card_suit_enum import CardSuit
 
 
 class PokerCard:

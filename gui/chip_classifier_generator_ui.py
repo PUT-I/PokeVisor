@@ -4,7 +4,7 @@ import tkinter.ttk as ttk
 from tkinter import *
 from tkinter import filedialog
 
-from chip_detector import chip_detection
+from logic.chip_detector import chip_detection
 
 
 class ChipClassifierGeneratorUi(Tk):

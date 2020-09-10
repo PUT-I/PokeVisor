@@ -4,7 +4,7 @@ from typing import Tuple, List
 import cv2
 import numpy as np
 
-from chip_detector import chip_detection
+from logic.chip_detector import chip_detection
 
 _community_mask = None
 _player_masks = []

@@ -5,7 +5,7 @@ import argparse
 
 import cv2
 
-from card_detector import card_detection
+from logic.card_detector import card_detection
 
 
 def parse_arguments():

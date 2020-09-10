@@ -2,11 +2,11 @@ from time import sleep
 from tkinter import *
 from typing import List
 
-from card_detector.classes.card_rank_enum import CardRank
-from card_detector.classes.card_suit_enum import CardSuit
-from card_detector.classes.poker_card import PokerCard
-from chip_detector.classes.poker_chip_enum import PokerChip
-from visualization.classes.player import Player
+from classes.player import Player
+from classes.poker_card import PokerCard
+from enums.card_rank_enum import CardRank
+from enums.card_suit_enum import CardSuit
+from enums.poker_chip_enum import PokerChip
 
 card_rank_symbols = {
     CardRank.two.name: "2",

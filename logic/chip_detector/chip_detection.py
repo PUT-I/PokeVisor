@@ -8,7 +8,7 @@ from joblib import dump, load
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 
-from chip_detector.classes.poker_chip_enum import PokerChip
+from enums.poker_chip_enum import PokerChip
 
 # noinspection PyTypeChecker
 _clf: MLPClassifier = None

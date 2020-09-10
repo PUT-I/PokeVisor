@@ -2,7 +2,7 @@ import argparse
 
 import cv2
 
-from chip_detector import chip_detection
+from logic.chip_detector import chip_detection
 
 
 def parse_arguments():

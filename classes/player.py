@@ -1,8 +1,8 @@
 from typing import List, Dict
 
-from card_detector.classes.poker_card import PokerCard
-from chip_detector.classes.poker_chip_enum import PokerChip
-from hand_selector.classes.poker_hand_enum import PokerHand
+from classes.poker_card import PokerCard
+from enums.poker_chip_enum import PokerChip
+from enums.poker_hand_enum import PokerHand
 
 
 class Player:
