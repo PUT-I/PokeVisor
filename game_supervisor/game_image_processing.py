@@ -34,7 +34,9 @@ def put_overlay_on_image(img):
     return img_result
 
 
-def setup(img, classifier_path: str = "chip_classifier.joblib", detect_chips: bool = True):
+def setup(img, classifier_path: str = "chip_classifier.joblib", detect_chips: bool = True) -> int:
+    global _players
+
     _detect_chips = detect_chips
     if _detect_chips:
         chip_detection.setup(classifier_path)
@@ -80,6 +82,8 @@ def setup(img, classifier_path: str = "chip_classifier.joblib", detect_chips: bo
     while cv2.waitKey() != ord("s"):
         pass
     cv2.destroyAllWindows()
+
+    return _players
 
 
 def _calculate_point(origin_point: Tuple[int, int], angle: float, length: float) -> Tuple[int, int]:

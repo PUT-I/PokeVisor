@@ -32,8 +32,8 @@ def supervise(frame: np.ndarray, dst: np.ndarray = None) -> tuple:
     return sorted(community_cards), player_cards_list, community_chips, player_chips_list
 
 
-def supervise_video(cap) -> None:
-    status_ui = PokeVisorStatusUi(players=2)
+def supervise_video(cap, players: int = 2) -> None:
+    status_ui = PokeVisorStatusUi(players=players)
     fps = 60
     frame_time = round(1000 / fps)
 
@@ -48,18 +48,12 @@ def supervise_video(cap) -> None:
 
         table = game_image_processing.put_overlay_on_image(frame)
         if _check_if_cards_uncovered(community_cards, player_cards_list):
-            players = []
-            for i in range(len(player_cards_list)):
-                player = Player()
-                player.cards = player_cards_list[i]
-                player.chips = player_chips_list[i]
-                player.hand = Checker.get_best_hand(player.cards, community_cards)
-                players.append(player)
-            status_ui.write_turn(community_cards, players)
+            player_list = _create_player_list(player_cards_list, player_chips_list, community_cards)
+            status_ui.write_turn(community_cards, player_list)
         elif len([card for card in community_cards if card.is_unknown()]) == 0:
             status_ui.write_turn(community_cards, [])
 
-        cv2.imshow('frame', table)
+        cv2.imshow('PokeVisor', table)
         duration = time.time() - start_time
         wait_time = round(frame_time - duration * 1000)
         if wait_time < 1:
@@ -69,6 +63,33 @@ def supervise_video(cap) -> None:
     cv2.destroyAllWindows()
     status_ui.destroy()
     cap.release()
+
+
+def supervise_images(images: list, players: int = 2):
+    status_ui = PokeVisorStatusUi(players=players)
+    for image in images:
+        community_cards, player_cards_list, community_chips, player_chips_list = supervise(image, dst=image)
+        image = game_image_processing.put_overlay_on_image(image)
+
+        player_list = _create_player_list(player_cards_list, player_chips_list, community_cards)
+        status_ui.write_turn(community_cards, player_list)
+
+        cv2.imshow("PokeVisor", image)
+        cv2.waitKey()
+
+    cv2.destroyAllWindows()
+    status_ui.destroy()
+
+
+def _create_player_list(player_cards_list, player_chips_list, community_cards):
+    players = []
+    for i in range(len(player_cards_list)):
+        player = Player()
+        player.cards = player_cards_list[i]
+        player.chips = player_chips_list[i]
+        player.hand = Checker.get_best_hand(player.cards, community_cards)
+        players.append(player)
+    return players
 
 
 def _parse_arguments() -> vars:

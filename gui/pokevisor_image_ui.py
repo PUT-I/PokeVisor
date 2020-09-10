@@ -8,22 +8,22 @@ import cv2
 from game_supervisor import game_image_processing, game_supervision
 
 
-class PokeVisorVideoUi(Tk):
+class PokeVisorImageUi(Tk):
     def __init__(self):
         super().__init__(None)
         self.title('PokeVisor')
 
-        video_label = ttk.LabelFrame(self, text="Video to load")
+        image_label = ttk.LabelFrame(self, text="Images to load")
 
-        self._video_text = StringVar()
-        self._video_text.set(os.getcwd())
-        video_input = ttk.Entry(video_label, width=60, textvariable=self._video_text)
-        video_input.pack(side=LEFT, padx=5, pady=5)
+        self._image_text = StringVar()
+        self._image_text.set(os.getcwd())
+        image_input = ttk.Entry(image_label, width=60, textvariable=self._image_text)
+        image_input.pack(side=LEFT, padx=5, pady=5)
 
-        browse_video_button = ttk.Button(video_label, text="Browse", command=self._browse_videos)
-        browse_video_button.pack(side=RIGHT, padx=5, pady=5)
+        browse_image_button = ttk.Button(image_label, text="Browse", command=self._browse_videos)
+        browse_image_button.pack(side=RIGHT, padx=5, pady=5)
 
-        video_label.pack(padx=5, pady=5)
+        image_label.pack(padx=5, pady=5)
 
         classifier_label = ttk.LabelFrame(self, text="Chip classifier")
 
@@ -51,8 +51,8 @@ class PokeVisorVideoUi(Tk):
         self._classifier_text.set(classifier_path)
 
     def _browse_videos(self):
-        video_path = filedialog.askopenfilename(initialdir=os.getcwd(), title="Select video file")
-        self._video_text.set(video_path)
+        image_path = filedialog.askdirectory(initialdir=os.getcwd(), title="Select images directory")
+        self._image_text.set(image_path)
 
     def _toggle_chip_detection(self):
         button_text: str = self._toggle_button.config("text")[-1]
@@ -62,23 +62,27 @@ class PokeVisorVideoUi(Tk):
             self._toggle_button.config(text="On")
 
     def _start(self):
-        video_path = self._video_text.get()
+        image_path = self._image_text.get()
         classifier_path = self._classifier_text.get()
         detect_chips = self._toggle_button.config("text")[-1].lower() == "on"
 
-        cap = cv2.VideoCapture(video_path)
-
-        _, frame = cap.read()
-
+        images = []
+        for root, _, files in os.walk(image_path, topdown=False):
+            for file in files:
+                image = cv2.imread("{}/{}".format(root, file))
+                images.append(image)
         self.destroy()
-        players = game_image_processing.setup(frame, classifier_path=classifier_path, detect_chips=detect_chips)
-        game_supervision.supervise_video(cap, players)
+        players = game_image_processing.setup(images[0], classifier_path=classifier_path, detect_chips=detect_chips)
+        game_supervision.supervise_images(images, players)
 
 
 def main():
-    status_ui = PokeVisorVideoUi()
+    status_ui = PokeVisorImageUi()
     while True:
-        status_ui.update()
+        try:
+            status_ui.update()
+        except TclError:
+            break
 
 
 if __name__ == "__main__":
