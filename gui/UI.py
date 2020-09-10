@@ -5,6 +5,7 @@ from hand_selector.classes.poker_hand_enum import PokerHand
 from hand_selector.hand_checker import Checker
 from visualization.classes.player import Player
 from chip_detector.classes.poker_chip_enum import PokerChip
+from tkinter import *
 
 
 class TUI:
@@ -26,10 +27,25 @@ class TUI:
             print(card.rank.name + " " + card.suit.name)
 
         for player in list_of_players:
+            row1 = Entry(relief=RIDGE)
+            row1.grid(row=1, column=list_of_players.index(player)+1, sticky=NSEW)
+            row1.insert(END, player.name)
+
             print(player.name + "\n Cards:")
+            cards = ""
             for card in player.cards:
+                cards += card.rank.name + " " + card.suit.name + ", "
                 print(card.rank.name + " " + card.suit.name)
-            print("Player {} has {} value in chips".format(player.name, player.sum_chip_values()))
+
+            row2 = Entry(relief=RIDGE)
+            row2.grid(row=2, column=list_of_players.index(player)+1, sticky=NSEW)
+            row2.insert(END, cards)
+
+            row3 = Entry(relief=RIDGE)
+            row3.grid(row=3, column=list_of_players.index(player)+1, sticky=NSEW)
+            row3.insert(END, "{} has {} value in chips".format(player.name, player.sum_chip_values()))
+
+            print("{} has {} value in chips".format(player.name, player.sum_chip_values()))
 
 
 def main():
@@ -60,6 +76,7 @@ def main():
     player_3.chips[PokerChip.green] = 8
     player_3.cards = hand_3
     TUI.write__turn(community_cards, [player, player_1, player_3])
+    mainloop()
 
 
 if __name__ == "__main__":
