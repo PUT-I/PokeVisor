@@ -153,7 +153,7 @@ def preprocess_card(contour, image) -> PokerCardInfo:
     card_info.center = [cent_x, cent_y]
 
     # Warp card into 256x360 flattened image using perspective transform
-    warp = cv2.resize(flattener(image, pts, w, h), (256, 360))
+    warp = cv2.resize(_flattener(image, pts, w, h), (256, 360))
 
     # Grab corner of warped card image and do a 4x zoom
     corner = warp[0:CORNER_HEIGHT, 0:CORNER_WIDTH]
@@ -267,7 +267,7 @@ def draw_results(image, card):
     return image
 
 
-def flattener(image, pts, w, h):
+def _flattener(image, pts, w, h):
     """Flattens an image of a card into a top-down 200x300 perspective.
     Returns the flattened, re-sized, grayed image.
     See www.pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/"""
