@@ -11,6 +11,16 @@ class Player:
         self.chips: Dict[PokerChip, int] = {}
         self.hand: PokerHand = PokerHand.unknown
 
+    def add_chips(self, chips: List[PokerChip]):
+        for chip in chips:
+            self.add_chip(chip)
+
+    def add_chip(self, chip: PokerChip):
+        if chip in self.chips:
+            self.chips[chip] += 1
+        else:
+            self.chips[chip] = 1
+
     def sum_chip_values(self):
         chip_sum = 0
         for chip in self.chips:

@@ -86,7 +86,7 @@ def _create_player_list(player_cards_list, player_chips_list, community_cards):
     for i in range(len(player_cards_list)):
         player = Player()
         player.cards = player_cards_list[i]
-        player.chips = player_chips_list[i]
+        player.add_chips(player_chips_list[i])
         player.hand = Checker.get_best_hand(player.cards, community_cards)
         players.append(player)
     return players
