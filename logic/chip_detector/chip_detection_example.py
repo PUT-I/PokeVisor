@@ -2,6 +2,7 @@ import argparse
 
 import cv2
 
+from enums.poker_chip_enum import PokerChip
 from logic.chip_detector import chip_detection
 
 
@@ -32,7 +33,7 @@ def main():
     print(chips)
 
     # write summary on output image
-    cv2.putText(output, "Chips detected: {}".format(len(chips)),
+    cv2.putText(output, "Chips detected: {}".format(len([chip for chip in chips if chip != PokerChip.unknown])),
                 (5, output.shape[0] - 24), cv2.FONT_HERSHEY_PLAIN,
                 1.0, (0, 0, 255), lineType=cv2.LINE_AA)
 

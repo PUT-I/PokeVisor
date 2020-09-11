@@ -19,7 +19,7 @@ train_ranks = card_detection_functions.load_ranks(path + "/sample_images/")
 train_suits = card_detection_functions.load_suits(path + "/sample_images/")
 
 
-def remove_non_card_contours(cnts_sort: list, cnt_is_card: np.ndarray):
+def _remove_non_card_contours(cnts_sort: list, cnt_is_card: np.ndarray):
     cnts_sort_result = cnts_sort
 
     non_card_contours = []
@@ -34,7 +34,7 @@ def remove_non_card_contours(cnts_sort: list, cnt_is_card: np.ndarray):
     return cnts_sort_result, cnt_is_card
 
 
-def remove_inclusive_contours(cnts_sort: list, cnt_is_card: np.ndarray):
+def _remove_inclusive_contours(cnts_sort: list, cnt_is_card: np.ndarray):
     contour_removed = True
     cnts_sort_result = cnts_sort
 
@@ -72,8 +72,8 @@ def detect_cards(image, dst=None) -> tuple:
     if not np.any(cnt_is_card):
         return [], []
 
-    cnts_sort, cnt_is_card = remove_non_card_contours(cnts_sort, cnt_is_card)
-    cnts_sort, cnt_is_card = remove_inclusive_contours(cnts_sort, cnt_is_card)
+    cnts_sort, cnt_is_card = _remove_non_card_contours(cnts_sort, cnt_is_card)
+    cnts_sort, cnt_is_card = _remove_inclusive_contours(cnts_sort, cnt_is_card)
 
     # Initialize a new "cards" list to store the card objects.
     cards: List[PokerCardInfo] = []
