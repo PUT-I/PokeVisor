@@ -1,6 +1,8 @@
 #
 # Based on: https://github.com/EdjeElectronics/OpenCV-Playing-Card-Detector
 #
+import json
+import os
 
 import cv2
 import numpy as np
@@ -36,6 +38,19 @@ CARD_MAX_AREA = 240000
 CARD_MIN_AREA = 12500
 
 font = cv2.FONT_HERSHEY_SIMPLEX
+
+
+def _load_settings():
+    global CARD_MAX_AREA, CARD_MIN_AREA
+
+    if os.path.isfile("config.json"):
+        with open("config.json", "r") as file:
+            settings = json.loads(file.read())["card-detector"]
+        CARD_MAX_AREA = settings["card-max-area"]
+        CARD_MIN_AREA = settings["card-min-area"]
+
+
+_load_settings()
 
 
 def load_ranks(filepath):

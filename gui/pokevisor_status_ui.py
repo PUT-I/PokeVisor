@@ -9,6 +9,7 @@ from enums.card_suit_enum import CardSuit
 from enums.poker_chip_enum import PokerChip
 
 card_rank_symbols = {
+    CardRank.unknown.name: "u",
     CardRank.two.name: "2",
     CardRank.three.name: "3",
     CardRank.four.name: "4",
@@ -25,6 +26,7 @@ card_rank_symbols = {
 }
 
 card_suit_symbols = {
+    CardSuit.unknown.name: 'u',
     CardSuit.spades.name: chr(9824),
     CardSuit.diamonds.name: chr(9830),
     CardSuit.hearts.name: chr(9829),

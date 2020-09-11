@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 from typing import Optional, List
 
@@ -13,6 +14,24 @@ from enums.poker_chip_enum import PokerChip
 # noinspection PyTypeChecker
 _clf: MLPClassifier = None
 _enabled = True
+
+CHIP_MIN_DISTANCE = 100
+CHIP_MIN_RADIUS = 20
+CHIP_MAX_RADIUS = 120
+
+
+def _load_settings():
+    global CHIP_MIN_RADIUS, CHIP_MAX_RADIUS, CHIP_MIN_DISTANCE
+
+    if os.path.isfile("config.json"):
+        with open("config.json", "r") as file:
+            settings = json.loads(file.read())["chip-detector"]
+        CHIP_MIN_DISTANCE = settings["chip-min-distance"]
+        CHIP_MIN_RADIUS = settings["chip-min-radius"]
+        CHIP_MAX_RADIUS = settings["chip-max-radius"]
+
+
+_load_settings()
 
 
 def disable():
@@ -159,6 +178,8 @@ def _train_classifier(input_data, output_data, filename: str = None):
 
 
 def _detect_circles(image):
+    global CHIP_MIN_RADIUS, CHIP_MAX_RADIUS, CHIP_MIN_DISTANCE
+
     # blur the image using Gaussian blurring, where pixels closer to the center
     # contribute more "weight" to the average, first argument is the source image,
     # second argument is kernel size, third one is sigma (0 for autodetect)
@@ -174,8 +195,8 @@ def _detect_circles(image):
     # param_2 = 100*: Threshold for center detection.
     # min_radius = 50: Minimum radius to be detected.
     # max_radius = 120: Maximum radius to be detected.
-    circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, dp=2.2, minDist=100,
-                               param1=200, param2=100, minRadius=20, maxRadius=120)
+    circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, dp=2.2, minDist=CHIP_MIN_DISTANCE,
+                               param1=200, param2=100, minRadius=CHIP_MIN_RADIUS, maxRadius=CHIP_MAX_RADIUS)
     return circles
 
 
