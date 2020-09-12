@@ -10,4 +10,4 @@ Pisany jako projekt zaliczeniowy na Politechnice Poznańskiej.
 - Szymon Wasilewski
 
 ## Dokumentacja projektowa
-https://docs.google.com/document/d/1XVxabKX2OUxP1ZKWQhhT5C_Q9uBjs1O020BDVXaxpEQ/edit#heading=h.mz9mushp7hoc
+Dokumentację można obejrzeć [tutaj](https://github.com/Gunock/PokeVisor/blob/master/Documentation_11_09_2020.pdf)
